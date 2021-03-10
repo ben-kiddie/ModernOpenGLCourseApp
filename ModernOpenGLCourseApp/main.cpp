@@ -3,8 +3,6 @@
 #include <cmath>
 #include <vector>
 
-// pog
-
 // Include the stuff we linked in Section 1.3 tutorial and beyond.
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
