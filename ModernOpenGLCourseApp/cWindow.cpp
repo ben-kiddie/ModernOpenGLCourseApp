@@ -4,12 +4,22 @@ Window::Window()
 {
 	width = 800;
 	height = 600;
+
+	for (size_t i = 0; i < 1024; i++)
+	{
+		keys[i] = 0;
+	}
 }
 
 Window::Window(GLint windowWidth, GLint windowHeight)
 {
 	width = windowWidth;
 	height = windowHeight;
+
+	for (size_t i = 0; i < 1024; i++)
+	{
+		keys[i] = 0;
+	}
 }
 
 Window::~Window()
@@ -65,6 +75,10 @@ int Window::Initialise()
 	//	1 - A pointer to the window which we want to make the context
 	glfwMakeContextCurrent(mainWindow);	// We setup our main window as our context
 
+	// Handle key and mouse input
+	CreateCallbacks();
+	glfwSetInputMode(mainWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);	// This disables our cursor so we cannot see it in our window, but it acts as if it is always centered on our window
+
 	// Allow modern extension features
 	glewExperimental = GL_TRUE;	// Enables access to extensions for experimental features. A bit too advanced for this course, but no downsides to enabling.
 
@@ -87,4 +101,67 @@ int Window::Initialise()
 	//	4 - Height of our window space to draw
 	glViewport(0, 0, bufferWidth, bufferHeight);	// Setup our viewport with pre-defined buffer sizes
 
+	glfwSetWindowUserPointer(mainWindow, this);
+}
+
+GLfloat Window::GetXChange()
+{
+	GLfloat theChange = xChange;
+	xChange = 0.0f;
+	return theChange;
+}
+
+GLfloat Window::GetYChange()
+{
+	GLfloat theChange = yChange;
+	yChange = 0.0f;
+	return theChange;
+}
+
+void Window::CreateCallbacks()
+{
+	// When a key is pressed in mainwindow, callback to the handle keys function and pass in all the variables
+	glfwSetKeyCallback(mainWindow, HandleKeys);
+
+	glfwSetCursorPosCallback(mainWindow, HandleMouse);
+}
+
+void Window::HandleKeys(GLFWwindow* window, int key, int code, int action, int mode)
+{
+	Window* theWindow = static_cast<Window*>(glfwGetWindowUserPointer(window));
+
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	}
+	if (key >= 0 && key < 1024)
+	{
+		if (action == GLFW_PRESS)
+		{
+			theWindow->keys[key] = true;
+		}
+		else if (action == GLFW_RELEASE)
+		{
+			theWindow->keys[key] = false;
+		}
+	}
+}
+
+void Window::HandleMouse(GLFWwindow* window, double xPos, double yPos)
+{
+	Window* theWindow = static_cast<Window*>(glfwGetWindowUserPointer(window));
+
+	if (theWindow->mouseFirstMoved)
+	{
+		theWindow->lastX = xPos;
+		theWindow->lastY = yPos;
+		theWindow->mouseFirstMoved = false;
+	}
+
+	// Update x and y - note that the y is inverted to replicate what games usually use. To invert y controls, subtract ypos from lasty
+	theWindow->xChange = xPos - theWindow->lastX;
+	theWindow->yChange = theWindow->lastY - yPos;
+
+	theWindow->lastX = xPos;
+	theWindow->lastY = yPos;
 }
