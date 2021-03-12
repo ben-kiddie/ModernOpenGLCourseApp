@@ -62,6 +62,11 @@ GLuint Shader::GetModelLocation()
 	return uniformModel;
 }
 
+GLuint Shader::GetViewLocation()
+{
+	return uniformView;
+}
+
 void Shader::UseShader()
 {
 	glUseProgram(shaderID);
@@ -137,6 +142,7 @@ void Shader::CompileShader(const char* vertexCode, const char* fragmentCode)
 	//	2 - The name of the uniform variable in our shader
 	uniformModel = glGetUniformLocation(shaderID, "model");	// We're saying we want the ID (location) of the xMove uniform variable in our shader stored in the uniformXMove variable - reference this ID to modify inside the shader
 	uniformProjection = glGetUniformLocation(shaderID, "projection");
+	uniformView = glGetUniformLocation(shaderID, "view");
 }
 
 void Shader::AddShader(GLuint theProgram, const char* shaderCode, GLenum shaderType)

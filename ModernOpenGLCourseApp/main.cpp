@@ -15,6 +15,7 @@
 #include "cMesh.h"
 #include "cShader.h"
 #include "cWindow.h"
+#include "cCamera.h"
 
 
 
@@ -23,7 +24,13 @@ const float toRadians = 3.14159265f / 180.0f;	// If we multiply a number by this
 Window mainWindow;
 
 std::vector<Mesh*> meshList;
+
 std::vector<Shader> shaderList;
+
+Camera camera;
+
+GLfloat deltaTime = 0.0f,
+lastTime = 0.0f;
 
 // Vertex shader - to be moved to a separate file. Here we are taking in vertices to be modified or used as is, then passed to fragment shader.
 static const char* vShader = "Shaders/shader.vert";
@@ -75,7 +82,9 @@ int main()
 	CreateObjects();
 	CreateShaders();
 
-	GLuint uniformProjection = 0, uniformModel = 0;
+	camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.2f);
+
+	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0;
 
 	// Parameters of glm::perspective:
 	//	1 - The angle for our FOV in the y axis
@@ -86,8 +95,16 @@ int main()
 
 	while (!mainWindow.GetShouldClose())
 	{
+		// In this application, we are running in seconds. If we were to use SDL, we would be running in milliseconds, so we would need to adjust for this.
+		GLfloat currentTime = glfwGetTime();
+		deltaTime = currentTime - lastTime;
+		lastTime = currentTime;
+
 		// Get and handle user input events
 		glfwPollEvents();	// glfwPollEvents picks up events such as keyboard presses, mouse movements, clicking to close a window, moving a window, resizing a window, and more!
+
+		camera.KeyControl(mainWindow.GetKeys(), deltaTime);
+		camera.MouseControl(mainWindow.GetXChange(), mainWindow.GetYChange());
 
 		// Clear the window
 
@@ -103,6 +120,7 @@ int main()
 		shaderList[0].UseShader();
 		uniformModel = shaderList[0].GetModelLocation();
 		uniformProjection = shaderList[0].GetProjectionLocation();
+		uniformView = shaderList[0].GetViewLocation();
 
 		glm::mat4 model(1.0f); // Setup a 4x4 identity matrix so that we can calculate using it later
 
@@ -110,12 +128,14 @@ int main()
 		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
 		meshList[0]->RenderMesh();
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 1.0f, -2.5f));
 		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
 		meshList[1]->RenderMesh();
 
 		glUseProgram(0);	// Once we're done with a shader program, remember to unbind it.
