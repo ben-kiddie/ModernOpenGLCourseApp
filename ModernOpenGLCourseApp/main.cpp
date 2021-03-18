@@ -1,9 +1,13 @@
-#include <stdio.h>	// Include the "standard input output" library - this will let us handle input and output values to return errors to the user
+// Definitions
+#define STB_IMAGE_IMPLEMENTATION
+
+// Standard includes
+#include <stdio.h>
 #include <string.h>
 #include <cmath>
 #include <vector>
 
-// Include the stuff we linked in Section 1.3 tutorial and beyond.
+// External includes
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -16,21 +20,11 @@
 #include "cShader.h"
 #include "cWindow.h"
 #include "cCamera.h"
+#include "cTexture.h"
 
 
 
 const float toRadians = 3.14159265f / 180.0f;	// If we multiply a number by this value, it will output a radian value
-
-Window mainWindow;
-
-std::vector<Mesh*> meshList;
-
-std::vector<Shader> shaderList;
-
-Camera camera;
-
-GLfloat deltaTime = 0.0f,
-lastTime = 0.0f;
 
 // Vertex shader - to be moved to a separate file. Here we are taking in vertices to be modified or used as is, then passed to fragment shader.
 static const char* vShader = "Shaders/shader.vert";
@@ -38,6 +32,20 @@ static const char* vShader = "Shaders/shader.vert";
 // Fragment shader - also to be moved to a separate file. Note: you don't normally pass anything in to the fragment shader, it simply picks up output from the vertex shader.
 // Additional note - with the fragment shader, you don't even have to specify an out variable. If you only have one variable, it is assumed to be the colour, which is defaulted as an output.
 static const char* fShader = "Shaders/shader.frag";
+
+GLfloat deltaTime = 0.0f,
+lastTime = 0.0f;
+
+Window mainWindow;
+
+Camera camera;
+
+Texture brickTexture,
+dirtTexture;
+
+std::vector<Mesh*> meshList;
+
+std::vector<Shader> shaderList;
 
 
 
@@ -52,18 +60,19 @@ void CreateObjects()
 
 	// Setup vertices of triangle - no depth, just three vertices within normalised space. Remember - the left side and bottom of our window are represented by -1.0 (or "100% left (or down)), or 1.0 for top or right of our window.
 	GLfloat vertices[] = {
-		-1.0f, -1.0f, 0.0f,		// Bottom left 
-		0.0f, -1.0f, 1.0f,		// Background
-		1.0f, -1.0f, 0.0f,		// Bottom right
-		0.0f, 1.0f, 0.0f		// Top
+	//	x		y		z		u		v
+		-1.0f,	-1.0f,	0.0f,	0.0f,	0.0f,	// Bottom left 
+		0.0f,	-1.0f,	1.0f,	0.5f,	0.0f,	// Background
+		1.0f,	-1.0f,	0.0f,	1.0f,	0.0f,	// Bottom right
+		0.0f,	1.0f,	0.0f,	0.5f,	1.0f	// Top
 	};
 
 	Mesh* obj1 = new Mesh();
-	obj1->CreateMesh(vertices, indices, 12, 12);
+	obj1->CreateMesh(vertices, indices, 20, 12);
 	meshList.push_back(obj1);
 
 	Mesh* obj2 = new Mesh();
-	obj2->CreateMesh(vertices, indices, 12, 12);
+	obj2->CreateMesh(vertices, indices, 20, 12);
 	meshList.push_back(obj2);
 }
 
@@ -92,6 +101,11 @@ int main()
 	//	3 - The near plane, where anything in front of this is clipped
 	//	4 - The far plane, where anything beyond this is clipped
 	glm::mat4 projection = glm::perspective(45.0f, mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight(), 0.1f, 100.0f);
+
+	brickTexture = Texture("Textures/brick.png");
+	brickTexture.LoadTexture();
+	dirtTexture = Texture("Textures/dirt.png");
+	dirtTexture.LoadTexture();
 
 	while (!mainWindow.GetShouldClose())
 	{
@@ -129,6 +143,7 @@ int main()
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
 		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
+		brickTexture.UseTexture();
 		meshList[0]->RenderMesh();
 
 		model = glm::mat4(1.0f);
@@ -136,6 +151,7 @@ int main()
 		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
+		dirtTexture.UseTexture();
 		meshList[1]->RenderMesh();
 
 		glUseProgram(0);	// Once we're done with a shader program, remember to unbind it.

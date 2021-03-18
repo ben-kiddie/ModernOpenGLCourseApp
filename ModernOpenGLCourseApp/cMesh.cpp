@@ -55,11 +55,15 @@ void Mesh::CreateMesh(GLfloat* vertices, unsigned int* indices, unsigned int num
 	//	4 - Enable normalising values (GL_TRUE), or do not normalise (GL_FALSE)
 	//	5 - The stride of our data, e.g., we may want to include colour following our positions in an array - colour has 4 floats, position has 3, so our stride would be 7 per vertex (vertex being the accumulation of both position and colour)
 	//	6 - The vertex offset, so we could stride into our array before reading the data, e.g., stride in two elements and begin from element 2
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);	// Here we simply say that, the variable at location 0 in our shader, we store an array where each vertex has 3 components, are of GL_FLOAT type, and have no stride, offset, or normalisation
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertices[0]) * 5, 0);	// Here we simply say that, the variable at location 0 in our shader, we store an array where each vertex has 3 components, are of GL_FLOAT type, and have no stride, offset, or normalisation
 
 	// Parameters of glEnableVertexAttribArray:
 	//	1 - The location in our shader layout we are enabling
 	glEnableVertexAttribArray(0);	// At location 0 in our shader, we are enabling it for us to pass vertex arrays to
+
+	// Set the vertex attrib pointer for slot 1, the texture coordinates
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertices[0]) * 5, (void*)(sizeof(vertices[0]) * 3));	// Offset by three floats, as starting from zero we get positions, 3 floats in is where tex coords are
+	glEnableVertexAttribArray(1);
 
 	// Unbind the VBO, then unbind the VAO, followed by IBO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
