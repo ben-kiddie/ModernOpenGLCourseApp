@@ -41,7 +41,8 @@ Window mainWindow;
 Camera camera;
 
 Texture brickTexture,
-dirtTexture;
+dirtTexture,
+emeraldOreTexture;
 
 std::vector<Mesh*> meshList;
 
@@ -53,7 +54,7 @@ void CreateObjects()
 {
 	unsigned int indices[] = {
 		0, 3, 1,	// Left face
-		1, 3, 2,	// Righ face
+		1, 3, 2,	// Right face
 		2, 3, 0,	// Front face
 		0, 1, 2		// Bottom face
 	};
@@ -74,6 +75,36 @@ void CreateObjects()
 	Mesh* obj2 = new Mesh();
 	obj2->CreateMesh(vertices, indices, 20, 12);
 	meshList.push_back(obj2);
+
+#pragma region Cube Exercise
+
+	unsigned int cubeIndices[] = {
+		0, 1, 2, 1, 3, 2,	// Front face
+		1, 5, 3, 5, 7, 3,	// Right face	
+		4, 5, 6, 5, 6, 7,	// Back face	
+		4, 6, 0, 0, 2, 6,	// Left face
+		2, 3, 6, 3, 7, 6,	// Top face
+		0, 1, 4, 1, 5, 4	// Bottom face
+	};
+
+	GLfloat cubeVertices[] = {
+	//	x		y		z		u		v
+		-1.0f,	-1.0f,	0.0f,	0.0f,	0.0f,	// 0 - Front bottom left
+		1.0f,	-1.0f,	0.0f,	1.0f,	0.0f,	// 1 - Front bottom right
+		-1.0f,	1.0f,	0.0f,	0.0f,	1.0f,	// 2 - Front top left
+		1.0f,	1.0f,	0.0f,	1.0f,	1.0f,	// 3 - Front top right
+		-1.0f,	-1.0f,	1.0f,	0.0f,	0.0f,	// 4 - Back bottom left
+		1.0f,	-1.0f,	1.0f,	1.0f,	0.0f,	// 5 - Back bottom right
+		-1.0f,	1.0f,	1.0f,	0.0f,	1.0f,	// 6 - Back top left
+		1.0f,	1.0f,	1.0f,	1.0f,	1.0f	// 7 - Back top right
+	};
+
+	Mesh* cube = new Mesh();
+	cube->CreateMesh(cubeVertices, cubeIndices, 40, 36);
+	meshList.push_back(cube);
+
+#pragma endregion
+
 }
 
 void CreateShaders()
@@ -106,6 +137,9 @@ int main()
 	brickTexture.LoadTexture();
 	dirtTexture = Texture("Textures/dirt.png");
 	dirtTexture.LoadTexture();
+	emeraldOreTexture = Texture("Textures/MC_Emerald_Ore.png");
+	emeraldOreTexture.LoadTexture();
+
 
 	while (!mainWindow.GetShouldClose())
 	{
@@ -153,6 +187,14 @@ int main()
 		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
 		dirtTexture.UseTexture();
 		meshList[1]->RenderMesh();
+
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(2.0f, 2.0f, -2.5f));
+		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
+		emeraldOreTexture.UseTexture();
+		meshList[2]->RenderMesh();
 
 		glUseProgram(0);	// Once we're done with a shader program, remember to unbind it.
 
