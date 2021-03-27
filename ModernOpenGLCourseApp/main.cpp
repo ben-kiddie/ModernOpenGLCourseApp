@@ -21,6 +21,7 @@
 #include "cWindow.h"
 #include "cCamera.h"
 #include "cTexture.h"
+#include "cLight.h"
 
 
 
@@ -33,19 +34,13 @@ static const char* vShader = "Shaders/shader.vert";
 // Additional note - with the fragment shader, you don't even have to specify an out variable. If you only have one variable, it is assumed to be the colour, which is defaulted as an output.
 static const char* fShader = "Shaders/shader.frag";
 
-GLfloat deltaTime = 0.0f,
-lastTime = 0.0f;
-
+GLfloat deltaTime = 0.0f, lastTime = 0.0f;
 Window mainWindow;
-
 Camera camera;
-
-Texture brickTexture,
-dirtTexture,
-emeraldOreTexture;
+Texture brickTexture, dirtTexture, emeraldOreTexture;
+Light mainLight;
 
 std::vector<Mesh*> meshList;
-
 std::vector<Shader> shaderList;
 
 
@@ -124,8 +119,6 @@ int main()
 
 	camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.2f);
 
-	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0;
-
 	// Parameters of glm::perspective:
 	//	1 - The angle for our FOV in the y axis
 	//	2 - The aspect ratio, found by dividing screen width by screen height
@@ -139,6 +132,10 @@ int main()
 	dirtTexture.LoadTexture();
 	emeraldOreTexture = Texture("Textures/MC_Emerald_Ore.png");
 	emeraldOreTexture.LoadTexture();
+
+	mainLight = Light(1.0f, 1.0f, 1.0f, 0.35f);
+
+	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0, uniformAmbientIntensity = 0, uniformAmbientColour = 0;
 
 
 	while (!mainWindow.GetShouldClose())
@@ -169,6 +166,9 @@ int main()
 		uniformModel = shaderList[0].GetModelLocation();
 		uniformProjection = shaderList[0].GetProjectionLocation();
 		uniformView = shaderList[0].GetViewLocation();
+		uniformAmbientColour = shaderList[0].GetAmbientColourLocation();
+		uniformAmbientIntensity = shaderList[0].GetAmbientIntensityLocation();
+		mainLight.UseLight(uniformAmbientIntensity, uniformAmbientColour);
 
 		glm::mat4 model(1.0f); // Setup a 4x4 identity matrix so that we can calculate using it later
 

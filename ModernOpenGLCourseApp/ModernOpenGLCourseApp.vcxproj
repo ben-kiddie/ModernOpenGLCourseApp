@@ -157,6 +157,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cCamera.cpp" />
+    <ClCompile Include="cLight.cpp" />
     <ClCompile Include="cMesh.cpp" />
     <ClCompile Include="cShader.cpp" />
     <ClCompile Include="cTexture.cpp" />
@@ -165,6 +166,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cCamera.h" />
+    <ClInclude Include="cLight.h" />
     <ClInclude Include="cMesh.h" />
     <ClInclude Include="cShader.h" />
     <ClInclude Include="cTexture.h" />
