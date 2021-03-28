@@ -17,17 +17,19 @@ public:
 
 	glm::mat4 CalculateViewMatrix();
 
-private:
-	glm::vec3 position,
-		front,
-		up,
-		right,
-		worldUp;
+	glm::vec3 GetCameraPosition();
 
-	GLfloat yaw,
-		pitch,
-		movementSpeed,
-		turnSpeed;
+private:
+	glm::vec3 mPosition,
+		mFront,
+		mUp,
+		mRight,
+		mWorldUp;
+
+	GLfloat mYaw,
+		mPitch,
+		mMovementSpeed,
+		mTurnSpeed;
 
 	void Update();
 };

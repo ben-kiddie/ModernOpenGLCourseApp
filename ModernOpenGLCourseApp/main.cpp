@@ -22,6 +22,7 @@
 #include "cCamera.h"
 #include "cTexture.h"
 #include "cLight.h"
+#include "cMaterial.h"
 
 
 
@@ -38,6 +39,7 @@ GLfloat deltaTime = 0.0f, lastTime = 0.0f;
 Window mainWindow;
 Camera camera;
 Texture brickTexture, dirtTexture, emeraldOreTexture;
+Material shinyMaterial, dullMaterial;
 Light mainLight;
 
 std::vector<Mesh*> meshList;
@@ -88,9 +90,9 @@ void CreateObjects()
 	// Setup vertices of triangle - no depth, just three vertices within normalised space. Remember - the left side and bottom of our window are represented by -1.0 (or "100% left (or down)), or 1.0 for top or right of our window.
 	GLfloat vertices[] = {
 	//	x		y		z			u		v			nX		nY		nZ
-		-1.0f,	-1.0f,	0.0f,		0.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// Bottom left 
+		-1.0f,	-1.0f,	-0.6f,		0.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// Bottom left 
 		0.0f,	-1.0f,	1.0f,		0.5f,	0.0f,		0.0f,	0.0f,	0.0f,	// Background
-		1.0f,	-1.0f,	0.0f,		1.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// Bottom right
+		1.0f,	-1.0f,	-0.6f,		1.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// Bottom right
 		0.0f,	1.0f,	0.0f,		0.5f,	1.0f,		0.0f,	0.0f,	0.0f	// Top
 	};
 
@@ -117,10 +119,10 @@ void CreateObjects()
 
 	GLfloat cubeVertices[] = {
 	//	x		y		z			u		v			nX		nY		nZ		
-		-1.0f,	-1.0f,	0.0f,		0.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 0 - Front bottom left
-		1.0f,	-1.0f,	0.0f,		1.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 1 - Front bottom right
-		-1.0f,	1.0f,	0.0f,		0.0f,	1.0f,		0.0f,	0.0f,	0.0f,	// 2 - Front top left
-		1.0f,	1.0f,	0.0f,		1.0f,	1.0f,		0.0f,	0.0f,	0.0f,	// 3 - Front top right
+		-1.0f,	-1.0f,	-1.0f,		0.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 0 - Front bottom left
+		1.0f,	-1.0f,	-1.0f,		1.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 1 - Front bottom right
+		-1.0f,	1.0f,	-1.0f,		0.0f,	1.0f,		0.0f,	0.0f,	0.0f,	// 2 - Front top left
+		1.0f,	1.0f,	-1.0f,		1.0f,	1.0f,		0.0f,	0.0f,	0.0f,	// 3 - Front top right
 		-1.0f,	-1.0f,	1.0f,		0.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 4 - Back bottom left
 		1.0f,	-1.0f,	1.0f,		1.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 5 - Back bottom right
 		-1.0f,	1.0f,	1.0f,		0.0f,	1.0f,		0.0f,	0.0f,	0.0f,	// 6 - Back top left
@@ -145,7 +147,7 @@ void CreateShaders()
 
 int main()
 {
-	mainWindow = Window(800, 600);
+	mainWindow = Window(1366, 768);
 	mainWindow.Initialise();
 
 	CreateObjects();
@@ -167,13 +169,16 @@ int main()
 	emeraldOreTexture = Texture("Textures/MC_Emerald_Ore.png");
 	emeraldOreTexture.LoadTexture();
 
-	mainLight = Light(1.0f, 1.0f, 1.0f, 0.35f, 
-					2.0f, -1.0f, -2.0f, 1.0f);
+	shinyMaterial = Material(1.0f, 32);
+	dullMaterial = Material(0.3f, 4);
 
-	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0,
+	mainLight = Light(1.0f, 1.0f, 1.0f, 0.2f, 
+					2.0f, -1.0f, -2.0f, 0.3f);
+
+	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0, uniformEyePosition = 0,
 		uniformAmbientIntensity = 0, uniformAmbientColour = 0,
-		uniformDiffuseIntensity = 0, uniformDirection = 0;
-
+		uniformDiffuseIntensity = 0, uniformDirection = 0,
+		uniformSpecularIntensity = 0, uniformShininess = 0;
 
 	while (!mainWindow.GetShouldClose())
 	{
@@ -203,36 +208,45 @@ int main()
 		uniformModel = shaderList[0].GetModelLocation();
 		uniformProjection = shaderList[0].GetProjectionLocation();
 		uniformView = shaderList[0].GetViewLocation();
+		uniformEyePosition = shaderList[0].GetEyePositionLocation();
 		uniformAmbientColour = shaderList[0].GetAmbientColourLocation();
 		uniformAmbientIntensity = shaderList[0].GetAmbientIntensityLocation();
 		uniformDirection = shaderList[0].GetDirectionLocation();
 		uniformDiffuseIntensity = shaderList[0].GetDiffuseIntensityLocation();
+		uniformSpecularIntensity = shaderList[0].GetSpecularIntensityLocation();
+		uniformShininess = shaderList[0].GetShininessLocation();
 		mainLight.UseLight(uniformAmbientIntensity, uniformAmbientColour, uniformDiffuseIntensity, uniformDirection);
 
+
+		// View and projection only need to be setup once. Model varies among different objects, so we will setup just view and projection once.
+		glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
+		glUniform3f(uniformEyePosition, camera.GetCameraPosition().x, camera.GetCameraPosition().y, camera.GetCameraPosition().z);	// Inside our fragment shader we want to know the eye position, i.e., camera pos
 		glm::mat4 model(1.0f); // Setup a 4x4 identity matrix so that we can calculate using it later
 
 		model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));	// Take our identity matrix and apply a translation to it (as of writing this, just move in the x-axis)
-		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
+		//model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
-		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
 		brickTexture.UseTexture();
+		shinyMaterial.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		meshList[0]->RenderMesh();
 
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 1.0f, -2.5f));
-		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
+		model = glm::translate(model, glm::vec3(0.0f, 4.0f, -2.5f));
+		//model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
+		//glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
 		dirtTexture.UseTexture();
+		dullMaterial.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		meshList[1]->RenderMesh();
 
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(2.0f, 2.0f, -2.5f));
-		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
+		model = glm::translate(model, glm::vec3(4.0f, 0.0f, -2.5f));
+		//model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
+		//glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
 		emeraldOreTexture.UseTexture();
+		shinyMaterial.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		meshList[2]->RenderMesh();
 
 		glUseProgram(0);	// Once we're done with a shader program, remember to unbind it.

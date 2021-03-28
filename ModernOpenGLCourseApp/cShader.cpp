@@ -67,6 +67,11 @@ GLuint Shader::GetViewLocation()
 	return uniformView;
 }
 
+GLuint Shader::GetEyePositionLocation()
+{
+	return uniformEyePosition;
+}
+
 GLuint Shader::GetAmbientIntensityLocation()
 {
 	return uniformAmbientIntensity;
@@ -85,6 +90,16 @@ GLuint Shader::GetDiffuseIntensityLocation()
 GLuint Shader::GetDirectionLocation()
 {
 	return uniformDirection;
+}
+
+GLuint Shader::GetSpecularIntensityLocation()
+{
+	return uniformSpecularIntensity;
+}
+
+GLuint Shader::GetShininessLocation()
+{
+	return uniformShininess;
 }
 
 void Shader::UseShader()
@@ -163,10 +178,13 @@ void Shader::CompileShader(const char* vertexCode, const char* fragmentCode)
 	uniformModel = glGetUniformLocation(shaderID, "model");	// We're saying we want the ID (location) of the xMove uniform variable in our shader stored in the uniformXMove variable - reference this ID to modify inside the shader
 	uniformProjection = glGetUniformLocation(shaderID, "projection");
 	uniformView = glGetUniformLocation(shaderID, "view");
+	uniformEyePosition = glGetUniformLocation(shaderID, "eyePosition");
 	uniformAmbientColour = glGetUniformLocation(shaderID, "directionalLight.colour");
 	uniformAmbientIntensity = glGetUniformLocation(shaderID, "directionalLight.ambientIntensity");
 	uniformDiffuseIntensity = glGetUniformLocation(shaderID, "directionalLight.diffuseIntensity");
 	uniformDirection = glGetUniformLocation(shaderID, "directionalLight.direction");
+	uniformSpecularIntensity = glGetUniformLocation(shaderID, "material.specularIntensity");
+	uniformShininess = glGetUniformLocation(shaderID, "material.shininess");
 }
 
 void Shader::AddShader(GLuint theProgram, const char* shaderCode, GLenum shaderType)

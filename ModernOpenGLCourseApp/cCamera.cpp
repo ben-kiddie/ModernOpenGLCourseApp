@@ -6,14 +6,14 @@ Camera::Camera()
 
 Camera::Camera(glm::vec3 startPosition, glm::vec3 startUp, GLfloat startYaw, GLfloat startPitch, GLfloat startMoveSpeed, GLfloat startTurnSpeed)
 {
-	position = startPosition;
-	worldUp = startUp;
-	yaw = startYaw;
-	pitch = startPitch;
-	front = glm::vec3(0.0f, 0.0f, 1.0f);
+	mPosition = startPosition;
+	mWorldUp = startUp;
+	mYaw = startYaw;
+	mPitch = startPitch;
+	mFront = glm::vec3(0.0f, 0.0f, 1.0f);
 
-	movementSpeed = startMoveSpeed;
-	turnSpeed = startTurnSpeed;
+	mMovementSpeed = startMoveSpeed;
+	mTurnSpeed = startTurnSpeed;
 
 	Update();
 }
@@ -24,41 +24,41 @@ Camera::~Camera()
 
 void Camera::KeyControl(bool* keys, GLfloat deltaTime)
 {
-	GLfloat velocity = movementSpeed * deltaTime;
+	GLfloat velocity = mMovementSpeed * deltaTime;
 
 	if (keys[GLFW_KEY_W])
 	{
-		position += front * velocity;
+		mPosition += mFront * velocity;
 	}
 	if (keys[GLFW_KEY_S])
 	{
-		position -= front * velocity;
+		mPosition -= mFront * velocity;
 	}
 	if (keys[GLFW_KEY_A])
 	{
-		position -= right * velocity;
+		mPosition -= mRight * velocity;
 	}
 	if (keys[GLFW_KEY_D])
 	{
-		position += right * velocity;
+		mPosition += mRight * velocity;
 	}
 }
 
 void Camera::MouseControl(GLfloat xChange, GLfloat yChange)
 {
-	xChange *= turnSpeed;
-	yChange *= turnSpeed;
+	xChange *= mTurnSpeed;
+	yChange *= mTurnSpeed;
 
-	yaw += xChange;
-	pitch += yChange;
+	mYaw += xChange;
+	mPitch += yChange;
 
-	if (pitch > 89.0f)
+	if (mPitch > 89.0f)
 	{
-		pitch = 89.0f;
+		mPitch = 89.0f;
 	}
-	if (pitch < -89.0f)
+	if (mPitch < -89.0f)
 	{
-		pitch = -89.0f;
+		mPitch = -89.0f;
 	}
 
 	Update();
@@ -70,17 +70,22 @@ glm::mat4 Camera::CalculateViewMatrix()
 	//	1 - The position of our camera or eye
 	//	2 - The position of something we want to look towards
 	//	3 - The local up vector relative to the camera
-	return glm::lookAt(position, position + front, up);	// You can manipulate this to give a 3rd person effect. If we had a player we want to follow, set argument 1 to the position around our player, and argument 2 to the position of the player.
+	return glm::lookAt(mPosition, mPosition + mFront, mUp);	// You can manipulate this to give a 3rd person effect. If we had a player we want to follow, set argument 1 to the position around our player, and argument 2 to the position of the player.
+}
+
+glm::vec3 Camera::GetCameraPosition()
+{
+	return mPosition;
 }
 
 void Camera::Update()
 {
-	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	front.y = sin(glm::radians(pitch));
-	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	front = glm::normalize(front);
+	mFront.x = cos(glm::radians(mYaw)) * cos(glm::radians(mPitch));
+	mFront.y = sin(glm::radians(mPitch));
+	mFront.z = sin(glm::radians(mYaw)) * cos(glm::radians(mPitch));
+	mFront = glm::normalize(mFront);
 
-	right = glm::normalize(glm::cross(front, worldUp));
+	mRight = glm::normalize(glm::cross(mFront, mWorldUp));
 
-	up = glm::normalize(glm::cross(right, front));
+	mUp = glm::normalize(glm::cross(mRight, mFront));
 }
