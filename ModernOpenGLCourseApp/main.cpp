@@ -45,6 +45,37 @@ std::vector<Shader> shaderList;
 
 
 
+void CalculateAverageNormals(unsigned int* indices, unsigned int indexCount, GLfloat* vertices, unsigned int vertexCount, unsigned int vertexLength, unsigned int normalOffset)
+{
+	for (size_t i = 0; i < indexCount; i += 3)
+	{
+		// index0,1,2 stores the starting index in our vertices array for a vertex, given an index which points to it. Adding an offset will let us jump to a particular attribute, e.g., normals.
+		unsigned int index0 = indices[i] * vertexLength;	// In our indices array, if we were to say point to index 3 of our vertices array, we know that the third vertex starts at index 9 (and follows on to index 10, then 11 for the full xyz).
+		unsigned int index1 = indices[i + 1] * vertexLength;
+		unsigned int index2 = indices[i + 2] * vertexLength;
+		
+		glm::vec3 v1(vertices[index1] - vertices[index0], vertices[index1 + 1] - vertices[index0 + 1], vertices[index1 + 2] - vertices[index0 + 2]);
+		glm::vec3 v2(vertices[index2] - vertices[index1], vertices[index2 + 1] - vertices[index1 + 1], vertices[index2 + 2] - vertices[index1 + 2]);
+	
+		glm::vec3 normal = glm::cross(v1, v2);
+		normal = glm::normalize(normal);
+
+		index0 += normalOffset, index1 += normalOffset, index2 += normalOffset;
+
+		vertices[index0] += normal.x, vertices[index0 + 1] += normal.y, vertices[index0 + 2] += normal.z;
+		vertices[index1] += normal.x, vertices[index1 + 1] += normal.y, vertices[index1 + 2] += normal.z;
+		vertices[index2] += normal.x, vertices[index2 + 1] += normal.y, vertices[index2 + 2] += normal.z;
+	}
+
+	for (size_t i = 0; i < vertexCount / vertexLength; i++)
+	{
+		unsigned int nOffset = i * vertexLength + normalOffset;
+		glm::vec3 vec(vertices[nOffset], vertices[nOffset + 1], vertices[nOffset + 2]);
+		vec = glm::normalize(vec);
+		vertices[nOffset] = vec.x, vertices[nOffset + 1] = vec.y, vertices[nOffset + 2] = vec.z;
+	}
+}
+
 void CreateObjects()
 {
 	unsigned int indices[] = {
@@ -56,19 +87,21 @@ void CreateObjects()
 
 	// Setup vertices of triangle - no depth, just three vertices within normalised space. Remember - the left side and bottom of our window are represented by -1.0 (or "100% left (or down)), or 1.0 for top or right of our window.
 	GLfloat vertices[] = {
-	//	x		y		z		u		v
-		-1.0f,	-1.0f,	0.0f,	0.0f,	0.0f,	// Bottom left 
-		0.0f,	-1.0f,	1.0f,	0.5f,	0.0f,	// Background
-		1.0f,	-1.0f,	0.0f,	1.0f,	0.0f,	// Bottom right
-		0.0f,	1.0f,	0.0f,	0.5f,	1.0f	// Top
+	//	x		y		z			u		v			nX		nY		nZ
+		-1.0f,	-1.0f,	0.0f,		0.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// Bottom left 
+		0.0f,	-1.0f,	1.0f,		0.5f,	0.0f,		0.0f,	0.0f,	0.0f,	// Background
+		1.0f,	-1.0f,	0.0f,		1.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// Bottom right
+		0.0f,	1.0f,	0.0f,		0.5f,	1.0f,		0.0f,	0.0f,	0.0f	// Top
 	};
 
+	CalculateAverageNormals(indices, 12, vertices, 32, 8, 5);
+
 	Mesh* obj1 = new Mesh();
-	obj1->CreateMesh(vertices, indices, 20, 12);
+	obj1->CreateMesh(vertices, indices, 32, 12);
 	meshList.push_back(obj1);
 
 	Mesh* obj2 = new Mesh();
-	obj2->CreateMesh(vertices, indices, 20, 12);
+	obj2->CreateMesh(vertices, indices, 32, 12);
 	meshList.push_back(obj2);
 
 #pragma region Cube Exercise
@@ -83,19 +116,20 @@ void CreateObjects()
 	};
 
 	GLfloat cubeVertices[] = {
-	//	x		y		z		u		v
-		-1.0f,	-1.0f,	0.0f,	0.0f,	0.0f,	// 0 - Front bottom left
-		1.0f,	-1.0f,	0.0f,	1.0f,	0.0f,	// 1 - Front bottom right
-		-1.0f,	1.0f,	0.0f,	0.0f,	1.0f,	// 2 - Front top left
-		1.0f,	1.0f,	0.0f,	1.0f,	1.0f,	// 3 - Front top right
-		-1.0f,	-1.0f,	1.0f,	0.0f,	0.0f,	// 4 - Back bottom left
-		1.0f,	-1.0f,	1.0f,	1.0f,	0.0f,	// 5 - Back bottom right
-		-1.0f,	1.0f,	1.0f,	0.0f,	1.0f,	// 6 - Back top left
-		1.0f,	1.0f,	1.0f,	1.0f,	1.0f	// 7 - Back top right
+	//	x		y		z			u		v			nX		nY		nZ		
+		-1.0f,	-1.0f,	0.0f,		0.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 0 - Front bottom left
+		1.0f,	-1.0f,	0.0f,		1.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 1 - Front bottom right
+		-1.0f,	1.0f,	0.0f,		0.0f,	1.0f,		0.0f,	0.0f,	0.0f,	// 2 - Front top left
+		1.0f,	1.0f,	0.0f,		1.0f,	1.0f,		0.0f,	0.0f,	0.0f,	// 3 - Front top right
+		-1.0f,	-1.0f,	1.0f,		0.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 4 - Back bottom left
+		1.0f,	-1.0f,	1.0f,		1.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 5 - Back bottom right
+		-1.0f,	1.0f,	1.0f,		0.0f,	1.0f,		0.0f,	0.0f,	0.0f,	// 6 - Back top left
+		1.0f,	1.0f,	1.0f,		1.0f,	1.0f,		0.0f,	0.0f,	0.0f	// 7 - Back top right
 	};
 
+	CalculateAverageNormals(cubeIndices, 36, cubeVertices, 64, 8, 5);
 	Mesh* cube = new Mesh();
-	cube->CreateMesh(cubeVertices, cubeIndices, 40, 36);
+	cube->CreateMesh(cubeVertices, cubeIndices, 64, 36);
 	meshList.push_back(cube);
 
 #pragma endregion
@@ -133,9 +167,12 @@ int main()
 	emeraldOreTexture = Texture("Textures/MC_Emerald_Ore.png");
 	emeraldOreTexture.LoadTexture();
 
-	mainLight = Light(1.0f, 1.0f, 1.0f, 0.35f);
+	mainLight = Light(1.0f, 1.0f, 1.0f, 0.35f, 
+					2.0f, -1.0f, -2.0f, 1.0f);
 
-	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0, uniformAmbientIntensity = 0, uniformAmbientColour = 0;
+	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0,
+		uniformAmbientIntensity = 0, uniformAmbientColour = 0,
+		uniformDiffuseIntensity = 0, uniformDirection = 0;
 
 
 	while (!mainWindow.GetShouldClose())
@@ -168,7 +205,9 @@ int main()
 		uniformView = shaderList[0].GetViewLocation();
 		uniformAmbientColour = shaderList[0].GetAmbientColourLocation();
 		uniformAmbientIntensity = shaderList[0].GetAmbientIntensityLocation();
-		mainLight.UseLight(uniformAmbientIntensity, uniformAmbientColour);
+		uniformDirection = shaderList[0].GetDirectionLocation();
+		uniformDiffuseIntensity = shaderList[0].GetDiffuseIntensityLocation();
+		mainLight.UseLight(uniformAmbientIntensity, uniformAmbientColour, uniformDiffuseIntensity, uniformDirection);
 
 		glm::mat4 model(1.0f); // Setup a 4x4 identity matrix so that we can calculate using it later
 
