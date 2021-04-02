@@ -157,9 +157,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cCamera.cpp" />
+    <ClCompile Include="cDirectionalLight.cpp" />
     <ClCompile Include="cLight.cpp" />
     <ClCompile Include="cMaterial.cpp" />
     <ClCompile Include="cMesh.cpp" />
+    <ClCompile Include="cPointLight.cpp" />
     <ClCompile Include="cShader.cpp" />
     <ClCompile Include="cTexture.cpp" />
     <ClCompile Include="cWindow.cpp" />
@@ -167,12 +169,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cCamera.h" />
+    <ClInclude Include="cDirectionalLight.h" />
     <ClInclude Include="cLight.h" />
     <ClInclude Include="cMaterial.h" />
     <ClInclude Include="cMesh.h" />
+    <ClInclude Include="cPointLight.h" />
     <ClInclude Include="cShader.h" />
     <ClInclude Include="cTexture.h" />
     <ClInclude Include="cWindow.h" />
+    <ClInclude Include="Globals.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

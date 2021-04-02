@@ -5,6 +5,7 @@ Shader::Shader()
     shaderID = 0;
     uniformModel = 0;
     uniformProjection = 0;
+	mPointLightCount = 0;
 }
 
 Shader::~Shader()
@@ -74,22 +75,22 @@ GLuint Shader::GetEyePositionLocation()
 
 GLuint Shader::GetAmbientIntensityLocation()
 {
-	return uniformAmbientIntensity;
+	return uniformDirectionalLight.uniformAmbientIntensity;
 }
 
 GLuint Shader::GetAmbientColourLocation()
 {
-	return uniformAmbientColour;
+	return uniformDirectionalLight.uniformColour;
 }
 
 GLuint Shader::GetDiffuseIntensityLocation()
 {
-	return uniformDiffuseIntensity;
+	return uniformDirectionalLight.uniformDiffuseIntensity;
 }
 
 GLuint Shader::GetDirectionLocation()
 {
-	return uniformDirection;
+	return uniformDirectionalLight.uniformDirection;
 }
 
 GLuint Shader::GetSpecularIntensityLocation()
@@ -100,6 +101,27 @@ GLuint Shader::GetSpecularIntensityLocation()
 GLuint Shader::GetShininessLocation()
 {
 	return uniformShininess;
+}
+
+void Shader::SetDirectionalLight(DirectionalLight* directionalLight)
+{
+	directionalLight->UseLight(uniformDirectionalLight.uniformAmbientIntensity,		// Note: the '->' operation is because we're working with a pointer, as opposed to the usual '.function()'
+								uniformDirectionalLight.uniformColour,
+								uniformDirectionalLight.uniformDiffuseIntensity, 
+								uniformDirectionalLight.uniformDirection);
+}
+
+void Shader::SetPointLights(PointLight* pointLights, unsigned int lightCount)
+{
+	if (lightCount > MAX_POINT_LIGHTS)	lightCount = MAX_POINT_LIGHTS;
+	glUniform1i(uniformPointLightCount, lightCount);	// We use glUniform1i because we are now using integers while we loop through our lights
+	
+	// Go through each point light within the array we set a pointer to and grab the member variable uniform locations
+	for (size_t i = 0; i < lightCount; i++){
+		pointLights[i].UseLight(uniformPointLight[i].uniformAmbientIntensity, uniformPointLight[i].uniformColour,
+			uniformPointLight[i].uniformDiffuseIntensity, uniformPointLight[i].uniformPosition,
+			uniformPointLight[i].uniformConstant, uniformPointLight[i].uniformLinear, uniformPointLight[i].uniformExponent);
+	}
 }
 
 void Shader::UseShader()
@@ -179,12 +201,46 @@ void Shader::CompileShader(const char* vertexCode, const char* fragmentCode)
 	uniformProjection = glGetUniformLocation(shaderID, "projection");
 	uniformView = glGetUniformLocation(shaderID, "view");
 	uniformEyePosition = glGetUniformLocation(shaderID, "eyePosition");
-	uniformAmbientColour = glGetUniformLocation(shaderID, "directionalLight.colour");
-	uniformAmbientIntensity = glGetUniformLocation(shaderID, "directionalLight.ambientIntensity");
-	uniformDiffuseIntensity = glGetUniformLocation(shaderID, "directionalLight.diffuseIntensity");
-	uniformDirection = glGetUniformLocation(shaderID, "directionalLight.direction");
+	
+	uniformDirectionalLight.uniformColour = glGetUniformLocation(shaderID, "directionalLight.base.colour");
+	uniformDirectionalLight.uniformAmbientIntensity = glGetUniformLocation(shaderID, "directionalLight.base.ambientIntensity");
+	uniformDirectionalLight.uniformDiffuseIntensity = glGetUniformLocation(shaderID, "directionalLight.base.diffuseIntensity");
+	uniformDirectionalLight.uniformDirection = glGetUniformLocation(shaderID, "directionalLight.direction");
+	
 	uniformSpecularIntensity = glGetUniformLocation(shaderID, "material.specularIntensity");
 	uniformShininess = glGetUniformLocation(shaderID, "material.shininess");
+	
+	uniformPointLightCount = glGetUniformLocation(shaderID, "pointLightCount");
+	for (size_t i = 0; i < MAX_POINT_LIGHTS; i++)
+	{
+		char locBuffer[100] = { '\0' };
+
+		// Parameters of snprintf:
+		//	1 - Pointer to a buffer where the resulting C-string is stored. The buffer should have a size of at least n characters.
+		//	2 - Maximum number of bytes to be used in the buffer. The generated string has a length of at most n - 1, leaving space for the additional terminating null character. size_t is an unsigned integral type.
+		//	3 - Format. C string that contains a format string that follows the same specifications as format in printf (see printf for details).
+		//	4+ - Additional arguments. 
+		snprintf(locBuffer, sizeof(locBuffer), "pointLights[%d].base.colour", i);	// Print the contents of pointLights to locBuffer. Note: %d gets replaced with the suffixed 'i'passed in. The idea is that we have an array of point lights to access in our fragment shader.
+		uniformPointLight[i].uniformColour = glGetUniformLocation(shaderID, locBuffer);	// For every point light, grab uniform location which we printed to our location buffer
+	
+		snprintf(locBuffer, sizeof(locBuffer), "pointLights[%d].base.ambientIntensity", i);
+		uniformPointLight[i].uniformAmbientIntensity = glGetUniformLocation(shaderID, locBuffer);
+	
+		snprintf(locBuffer, sizeof(locBuffer), "pointLights[%d].base.diffuseIntensity", i);
+		uniformPointLight[i].uniformDiffuseIntensity = glGetUniformLocation(shaderID, locBuffer);
+	
+		snprintf(locBuffer, sizeof(locBuffer), "pointLights[%d].position", i);
+		uniformPointLight[i].uniformPosition = glGetUniformLocation(shaderID, locBuffer);
+	
+		snprintf(locBuffer, sizeof(locBuffer), "pointLights[%d].constant", i);
+		uniformPointLight[i].uniformConstant = glGetUniformLocation(shaderID, locBuffer);
+	
+		snprintf(locBuffer, sizeof(locBuffer), "pointLights[%d].linear", i);
+		uniformPointLight[i].uniformLinear = glGetUniformLocation(shaderID, locBuffer);
+	
+		snprintf(locBuffer, sizeof(locBuffer), "pointLights[%d].exponent", i);
+		uniformPointLight[i].uniformExponent = glGetUniformLocation(shaderID, locBuffer);
+	}
 }
 
 void Shader::AddShader(GLuint theProgram, const char* shaderCode, GLenum shaderType)
