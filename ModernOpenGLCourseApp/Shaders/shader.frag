@@ -2,6 +2,7 @@
 
 // Constants
 const int MAX_POINT_LIGHTS = 3;
+const int MAX_SPOT_LIGHTS = 3;
 				
 // Structs
 struct Light
@@ -26,6 +27,13 @@ struct PointLight
 	float exponent;
 };
 
+struct SpotLight
+{
+	PointLight base;
+	vec3 direction;
+	float edge;
+};
+
 struct Material
 {
 	float specularIntensity;
@@ -45,6 +53,8 @@ out vec4 colour;
 uniform DirectionalLight directionalLight;
 uniform int pointLightCount;
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
+uniform int spotLightCount;
+uniform SpotLight spotLights[MAX_SPOT_LIGHTS];
 
 uniform sampler2D theTexture;
 uniform Material material;
@@ -81,21 +91,54 @@ vec4 CalcDirectionalLight()
 	return CalcLightByDirection(directionalLight.base, directionalLight.direction);
 }
 
+vec4 CalcPointLight(PointLight pLight)
+{
+		vec3 direction = vFragPos - pLight.position;	// Unlike directional light, we don't have a predefined direction, so we must do this dynamicaly per light
+		float distance = length(direction);	// Make sure we store the distance before we normalise
+		direction = normalize(direction);
+
+		vec4 colour = CalcLightByDirection(pLight.base, direction);
+		float attenuation = pLight.exponent * distance * distance +	// ax^2 +
+							pLight.linear * distance +				// bx +
+							pLight.constant;						// c
+		
+		return (colour / attenuation);	// Add the current attenuated lighting result to the fragment
+}
+
+vec4 CalcSpotLight(SpotLight sLight)
+{
+	vec3 rayDirection = normalize(vFragPos - sLight.base.position);
+	float slFactor = dot(rayDirection, sLight.direction);	// Set the spot light factor as the angle between the direction a spot light points and the fragment we are targeting. Used in identifying if a fragment is within our cut-off angle.
+	
+	// Only calculate the light if it is within our cone of influence
+	if(slFactor > sLight.edge)
+	{
+		return CalcPointLight(sLight.base)							// If we just took the point light calculations as is, we would get hard edges around our spot light.
+		* (1.0f - (1.0f - slFactor)*(1.0f/(1.0f - sLight.edge)));	// The rest of the calculation is used in getting a fade effect around the edge of our spot light.
+	}
+	else
+	{
+		return vec4(0.0f, 0.0f, 0.0f, 0.0f);;
+	}	
+}
+
 vec4 CalcPointLights()
 {
 	vec4 totalColour = vec4(0.0f, 0.0f, 0.0f, 0.0f);	// Holds the sum of attenuated point lights affecting this fragment
 	for(int i = 0; i < pointLightCount; i++)
 	{
-		vec3 direction = vFragPos - pointLights[i].position;	// Unlike directional light, we don't have a predefined direction, so we must do this dynamicaly per light
-		float distance = length(direction);	// Make sure we store the distance before we normalise
-		direction = normalize(direction);
+		totalColour += CalcPointLight(pointLights[i]);	// Add the current attenuated lighting result to the fragment
+	}
 
-		vec4 colour = CalcLightByDirection(pointLights[i].base, direction);
-		float attenuation = pointLights[i].exponent * distance * distance +	// ax^2 +
-							pointLights[i].linear * distance +				// bx +
-							pointLights[i].constant;						// c
-		
-		totalColour += (colour / attenuation);	// Add the current attenuated lighting result to the fragment
+	return totalColour;
+}
+
+vec4 CalcSpotLights()
+{
+	vec4 totalColour = vec4(0.0f, 0.0f, 0.0f, 0.0f);	// Holds the sum of attenuated point lights affecting this fragment
+	for(int i = 0; i < spotLightCount; i++)
+	{
+		totalColour += CalcSpotLight(spotLights[i]);	// Add the current attenuated lighting result to the fragment
 	}
 
 	return totalColour;
@@ -105,5 +148,6 @@ void main()
 {					
 	vec4 finalColour = CalcDirectionalLight();
 	finalColour += CalcPointLights();
+	finalColour += CalcSpotLights();
 	colour = texture(theTexture, vTexCoord) * finalColour;
 }					

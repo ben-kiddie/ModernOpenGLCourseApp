@@ -16,7 +16,7 @@ public:
         GLuint diffuseIntensityLocation, GLuint positionLocation,
         GLuint constantLocation, GLuint linearLocation, GLuint exponentLocation);
 
-private:
+protected:
     glm::vec3 mPosition;
     GLfloat mConstant, mLinear, mExponent;  // Used in the equation ax^2 + bx + c, where x is distance between light and fragment.
 };

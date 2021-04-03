@@ -163,6 +163,7 @@
     <ClCompile Include="cMesh.cpp" />
     <ClCompile Include="cPointLight.cpp" />
     <ClCompile Include="cShader.cpp" />
+    <ClCompile Include="cSpotLight.cpp" />
     <ClCompile Include="cTexture.cpp" />
     <ClCompile Include="cWindow.cpp" />
     <ClCompile Include="main.cpp" />
@@ -175,6 +176,7 @@
     <ClInclude Include="cMesh.h" />
     <ClInclude Include="cPointLight.h" />
     <ClInclude Include="cShader.h" />
+    <ClInclude Include="cSpotLight.h" />
     <ClInclude Include="cTexture.h" />
     <ClInclude Include="cWindow.h" />
     <ClInclude Include="Globals.h" />
