@@ -12,7 +12,17 @@ public:
 	Texture(const char* fileLocation);
 	~Texture();
 
-	void LoadTexture();
+	/// <summary>
+	/// Load a texture with RGB values.
+	/// </summary>
+	/// <returns>In the event this returns false, load a default texture.</returns>
+	bool LoadTexture();
+	/// <summary>
+	/// Load a texture with RGBA values.
+	/// </summary>
+	/// <returns>In the event this returns false, load a default texture.</returns>
+	bool LoadTextureA();
+
 	void UseTexture();
 	void ClearTexture();
 

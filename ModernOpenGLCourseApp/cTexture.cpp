@@ -23,18 +23,42 @@ Texture::~Texture()
 	ClearTexture();
 }
 
-void Texture::LoadTexture()
+bool Texture::LoadTexture()
 {
-	unsigned char* texData = stbi_load(mFileLocation, &mWidth, &mHeight, &mBitDepth, 0);	// 1 char is equal to 1 byte, which is commonly used to represent data in files
-	
+	unsigned char* texData = stbi_load(mFileLocation, &mWidth, &mHeight, &mBitDepth, 0);	// 1 char is equal to 1 byte, which is commonly used to represent data in files	
 	if (!texData)
 	{
 		printf("Failed to find: %s\n", mFileLocation);
-		return;
+		return false;
 	}
 
 	glGenTextures(1, &mTextureID);
 	glBindTexture(GL_TEXTURE_2D, mTextureID);	// Fun fact: 2d textures are, as you guessed, flat textures. 3d textures can be used in things like clouds, where if you are inside it, you have textures in a 3d setting, and not just a 2d texture plastered onto something.
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mWidth, mHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, texData);	// If your texture comes out looking strangely, check the format - you may want GL_RGBA in some cases
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	stbi_image_free(texData);
+	return true;
+}
+
+bool Texture::LoadTextureA()
+{
+	unsigned char* texData = stbi_load(mFileLocation, &mWidth, &mHeight, &mBitDepth, 0);
+	if (!texData)
+	{
+		printf("Failed to find: %s\n", mFileLocation);
+		return false;
+	}
+
+	glGenTextures(1, &mTextureID);
+	glBindTexture(GL_TEXTURE_2D, mTextureID);
 	
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -46,6 +70,7 @@ void Texture::LoadTexture()
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 	stbi_image_free(texData);
+	return true;
 }
 
 void Texture::UseTexture()
