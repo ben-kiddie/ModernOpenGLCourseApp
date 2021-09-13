@@ -18,6 +18,8 @@
     <None Include="Shaders\shader.frag" />
     <None Include="Shaders\shader.vert" />
     <None Include="glew32.dll" />
+    <None Include="Shaders\directional_shadow_map.vert" />
+    <None Include="Shaders\directional_shadow_map.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cMesh.cpp">
@@ -56,6 +58,9 @@
     <ClCompile Include="cModel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cShadowMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cMesh.h">
@@ -92,6 +97,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cModel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cShadowMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

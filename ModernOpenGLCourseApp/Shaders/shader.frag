@@ -45,6 +45,7 @@ in vec4 vCol;
 in vec2 vTexCoord;
 in vec3 vNormal;
 in vec3 vFragPos;
+in vec4 vDirectionalLightSpacePos;
 
 // Output		
 out vec4 colour;	
@@ -57,11 +58,49 @@ uniform int spotLightCount;
 uniform SpotLight spotLights[MAX_SPOT_LIGHTS];
 
 uniform sampler2D theTexture;
+uniform sampler2D directionalShadowMap;
+
 uniform Material material;
+
 uniform vec3 eyePosition;	// i.e., the camera position for any given first person camera
 
 // Functions
-vec4 CalcLightByDirection(Light light, vec3 direction)	// Directional lights calculate by direction, whereas point lights partly do the same, thus we use this function for both
+float CalcDirectionalShadowFactor(DirectionalLight light)
+{
+	vec3 projCoords = vDirectionalLightSpacePos.xyz / vDirectionalLightSpacePos.w;	// Get normalised device coordinates with range -1 and 1
+	projCoords = (projCoords * 0.5f) + 0.5f;	// By halving and adding 0.5f, this gets our values between 0 and 1, which is the same range in which our shadow map depth values operate
+
+	vec3 normal = normalize(vNormal);
+	vec3 lightDirection = normalize(light.direction);
+	float bias = max(0.05f * (1 - dot(normal, lightDirection)), 0.005f);
+
+	float current = projCoords.z;
+
+	float shadow = 0.0f;
+
+	vec2 texelSize = 1.0f / textureSize(directionalShadowMap, 0);
+
+	for(int x = -1; x <= 1; x++)
+	{
+		for(int y = -1; y <= 1; y++)
+		{
+			float pcfDepth = texture(directionalShadowMap, projCoords.xy + vec2(x, y) * texelSize).r;	// The first and only component available to access is the depth component, which can be stored under .r or .x
+			
+			shadow += current - bias > pcfDepth ? 1.0f : 0.0f;	// If our current point is greater (i.e., further away) than closest we are in full shadow (1.0f), otherwise not in shadow (0.0f)
+		}
+	}
+
+	shadow /= 9.0f;
+	
+	if(projCoords.z > 1.0f)
+	{
+		shadow = 0.0f;
+	}
+	
+	return shadow;
+}
+
+vec4 CalcLightByDirection(Light light, vec3 direction, float shadowFactor)	// Directional lights calculate by direction, whereas point lights partly do the same, thus we use this function for both
 {
 	vec4 ambientColour = vec4(light.colour, 1.0f) * light.ambientIntensity;
 
@@ -83,12 +122,13 @@ vec4 CalcLightByDirection(Light light, vec3 direction)	// Directional lights cal
 		}
 	}
 
-	return (ambientColour + diffuseColour + specularColour);
+	return (ambientColour + (1.0f - shadowFactor) * (diffuseColour + specularColour));	// Shadow factor is calculated as 1.0f being in shadow, however here we need to reverse it - otherwise diffuse and specular will be full power
 }
 
 vec4 CalcDirectionalLight()
 {
-	return CalcLightByDirection(directionalLight.base, directionalLight.direction);
+	float shadowFactor = CalcDirectionalShadowFactor(directionalLight);
+	return CalcLightByDirection(directionalLight.base, directionalLight.direction, shadowFactor);
 }
 
 vec4 CalcPointLight(PointLight pLight)
@@ -97,7 +137,7 @@ vec4 CalcPointLight(PointLight pLight)
 		float distance = length(direction);	// Make sure we store the distance before we normalise
 		direction = normalize(direction);
 
-		vec4 colour = CalcLightByDirection(pLight.base, direction);
+		vec4 colour = CalcLightByDirection(pLight.base, direction, 0.0f);
 		float attenuation = pLight.exponent * distance * distance +	// ax^2 +
 							pLight.linear * distance +				// bx +
 							pLight.constant;						// c

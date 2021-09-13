@@ -10,16 +10,20 @@ out vec4 vCol;
 out vec2 vTexCoord;
 out vec3 vNormal;
 out vec3 vFragPos;
+out vec4 vDirectionalLightSpacePos;
 
 // Uniforms						
 uniform mat4 model;						
 uniform mat4 projection;
 uniform mat4 view;
+uniform mat4 directionalLightTransform;
 
 // Functions							
 void main()							
 {	
 	gl_Position = projection * view * model * vec4(pos, 1.0f);	// Remember - the order is projection * view * model * identity matrix. Think of it as working backwards and moving through various spaces from there.
+	vDirectionalLightSpacePos = directionalLightTransform * model * vec4(pos, 1.0f);	// Store the details of the same position but relative to the light source in an output to the frag shader
+		
 	vCol = vec4(clamp(pos, 0.0f, 1.0f), 1.0f);	
 
 	vTexCoord = tex;

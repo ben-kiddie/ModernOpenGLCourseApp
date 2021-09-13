@@ -152,6 +152,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="glew32.dll" />
+    <None Include="Shaders\directional_shadow_map.frag" />
+    <None Include="Shaders\directional_shadow_map.vert" />
     <None Include="Shaders\shader.frag" />
     <None Include="Shaders\shader.vert" />
   </ItemGroup>
@@ -164,6 +166,7 @@
     <ClCompile Include="cModel.cpp" />
     <ClCompile Include="cPointLight.cpp" />
     <ClCompile Include="cShader.cpp" />
+    <ClCompile Include="cShadowMap.cpp" />
     <ClCompile Include="cSpotLight.cpp" />
     <ClCompile Include="cTexture.cpp" />
     <ClCompile Include="cWindow.cpp" />
@@ -178,6 +181,7 @@
     <ClInclude Include="cModel.h" />
     <ClInclude Include="cPointLight.h" />
     <ClInclude Include="cShader.h" />
+    <ClInclude Include="cShadowMap.h" />
     <ClInclude Include="cSpotLight.h" />
     <ClInclude Include="cTexture.h" />
     <ClInclude Include="cWindow.h" />
