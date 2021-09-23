@@ -154,6 +154,9 @@
     <None Include="glew32.dll" />
     <None Include="Shaders\directional_shadow_map.frag" />
     <None Include="Shaders\directional_shadow_map.vert" />
+    <None Include="Shaders\omni_shadow_map.frag" />
+    <None Include="Shaders\omni_shadow_map.geom" />
+    <None Include="Shaders\omni_shadow_map.vert" />
     <None Include="Shaders\shader.frag" />
     <None Include="Shaders\shader.vert" />
   </ItemGroup>
@@ -164,6 +167,7 @@
     <ClCompile Include="cMaterial.cpp" />
     <ClCompile Include="cMesh.cpp" />
     <ClCompile Include="cModel.cpp" />
+    <ClCompile Include="cOmniShadowMap.cpp" />
     <ClCompile Include="cPointLight.cpp" />
     <ClCompile Include="cShader.cpp" />
     <ClCompile Include="cShadowMap.cpp" />
@@ -179,6 +183,7 @@
     <ClInclude Include="cMaterial.h" />
     <ClInclude Include="cMesh.h" />
     <ClInclude Include="cModel.h" />
+    <ClInclude Include="cOmniShadowMap.h" />
     <ClInclude Include="cPointLight.h" />
     <ClInclude Include="cShader.h" />
     <ClInclude Include="cShadowMap.h" />

@@ -19,6 +19,7 @@
 
 // Custom classes
 #include "Globals.h"
+
 #include "cMesh.h"
 #include "cShader.h"
 #include "cWindow.h"
@@ -46,7 +47,7 @@ GLfloat blackhawkAngle = 0.0f;
 
 GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0, uniformEyePosition = 0,
 uniformSpecularIntensity = 0, uniformShininess = 0,
-uniformDirectionalLightTransform;
+uniformDirectionalLightTransform = 0, uniformOmniLightPosition = 0, uniformFarPlane = 0;
 
 Window mainWindow;
 Camera camera;
@@ -66,6 +67,7 @@ unsigned int spotLightCount = 0;
 std::vector<Mesh*> meshList;
 std::vector<Shader> shaderList;
 Shader directionalShadowShader;
+Shader omniShadowShader;
 
 
 
@@ -187,6 +189,9 @@ void CreateShaders()
 
 	directionalShadowShader = Shader();
 	directionalShadowShader.CreateFromFiles("Shaders/directional_shadow_map.vert", "Shaders/directional_shadow_map.frag");
+
+	omniShadowShader = Shader();
+	omniShadowShader.CreateFromFiles("Shaders/omni_shadow_map.vert", "Shaders/omni_shadow_map.geom", "Shaders/omni_shadow_map.frag");
 }
 
 void RenderScene()
@@ -262,6 +267,29 @@ void DirectionalShadowMapPass(DirectionalLight* light)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);	// When done with the shadowmap pass, bind default framebuffer
 }
 
+void OmniShadowMapPass(PointLight* light)
+{
+	omniShadowShader.UseShader();
+
+	glViewport(0, 0, light->GetShadowMap()->GetShadowWidth(), light->GetShadowMap()->GetShadowHeight());
+
+	light->GetShadowMap()->Write();
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	uniformModel = omniShadowShader.GetModelLocation();
+	uniformOmniLightPosition = omniShadowShader.GetOmniLightPosLocation();
+	uniformFarPlane = omniShadowShader.GetFarPlaneLocation();
+
+	glUniform3f(uniformOmniLightPosition, light->GetPosition().x, light->GetPosition().y, light->GetPosition().z);
+	glUniform1f(uniformFarPlane, light->GetFarPlane());
+
+	omniShadowShader.SetLightMatrices(light->CalculateLightTransform());
+
+	RenderScene();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void RenderPass(glm::mat4 projectionMatrix, glm::mat4 viewMatrix)
 {
 	shaderList[0].UseShader();
@@ -323,7 +351,7 @@ int main()
 	//	2 - The aspect ratio, found by dividing screen width by screen height
 	//	3 - The near plane, where anything in front of this is clipped
 	//	4 - The far plane, where anything beyond this is clipped
-	glm::mat4 projection = glm::perspective(45.0f, mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight(), 0.1f, 100.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(60.0f), mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight(), 0.1f, 100.0f);
 
 	Assimp::Importer importer;
 
@@ -353,29 +381,37 @@ int main()
 	pointLights[0] = PointLight(0.0f, 0.0f, 1.0f,
 								0.0f, 0.1f,
 								0.0f, 0.0f, 0.0f,
-								0.3f, 0.2f, 0.1f);
+								0.3f, 0.2f, 0.1f,
+								1024, 1024,
+								0.01f, 100.0f);
 	pointLightCount++;
 	
 	pointLights[1] = PointLight(0.0f, 1.0f, 0.0f,
 								0.0f, 0.1f,
 								-4.0f, 2.0f, 0.0f,
-								0.3f, 0.1f, 0.1f);
+								0.3f, 0.1f, 0.1f,
+								1024, 1024,
+								0.01f, 100.0f);
 	pointLightCount++;
 
-	spotLights[0] = SpotLight(	1.0f, 1.0f, 1.0f,
-								0.0f, 2.0f,
-								0.0f, 0.0f, 0.0f,
-								0.0f, -1.0f, 0.0f,
-								1.0f, 0.0f, 0.0f,
-								20.0f);
+	spotLights[0] = SpotLight(1.0f, 1.0f, 1.0f,
+							0.0f, 2.0f,
+							0.0f, 0.0f, 0.0f,
+							0.0f, -1.0f, 0.0f,
+							1.0f, 0.0f, 0.0f,
+							20.0f,
+							1024, 1024,
+							0.01f, 100.0f);
 	spotLightCount++;
 
-	spotLights[1] = SpotLight(	1.0f, 1.0f, 1.0f,
-								0.0f, 1.0f,
-								0.0f, -1.5f, 0.0f,
-								-100.0f, -1.0f, 0.0f,
-								1.0f, 0.0f, 0.0f,
-								20.0f);
+	spotLights[1] = SpotLight(1.0f, 1.0f, 1.0f,
+							0.0f, 1.0f,
+							0.0f, -1.5f, 0.0f,
+							-100.0f, -1.0f, 0.0f,
+							1.0f, 0.0f, 0.0f,
+							20.0f,
+							1024, 1024,
+							0.01f, 100.0f);
 	spotLightCount++;
 
 	while (!mainWindow.GetShouldClose())
@@ -394,6 +430,16 @@ int main()
 		shaderList[0].UseShader();
 
 		DirectionalShadowMapPass(&mainLight);	// Update the shadowmap to our main directional light
+		
+		for (size_t i = 0; i < pointLightCount; i++)
+		{
+			OmniShadowMapPass(&pointLights[i]);
+		}
+		for (size_t i = 0; i < spotLightCount; i++)
+		{
+			OmniShadowMapPass(&spotLights[i]);
+		}
+
 		RenderPass(projection, camera.CalculateViewMatrix());
 
 		glUseProgram(0);	// Once we're done with a shader program, remember to unbind it.

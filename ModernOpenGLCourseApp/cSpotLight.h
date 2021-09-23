@@ -10,7 +10,9 @@ public:
         GLfloat xPos, GLfloat yPos, GLfloat zPos,
         GLfloat xDirection, GLfloat yDirection, GLfloat zDirection,
         GLfloat constant, GLfloat linear, GLfloat exponent,
-        GLfloat edge);
+        GLfloat edge,
+        GLuint shadowWidth, GLuint shadowHeight,
+        GLfloat nearPlane, GLfloat farPlane);
     ~SpotLight();
 
     void UseLight(GLuint ambientIntensityLocation, GLuint ambientColourLocation,

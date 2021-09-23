@@ -20,6 +20,9 @@
     <None Include="glew32.dll" />
     <None Include="Shaders\directional_shadow_map.vert" />
     <None Include="Shaders\directional_shadow_map.frag" />
+    <None Include="Shaders\omni_shadow_map.frag" />
+    <None Include="Shaders\omni_shadow_map.geom" />
+    <None Include="Shaders\omni_shadow_map.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cMesh.cpp">
@@ -61,6 +64,9 @@
     <ClCompile Include="cShadowMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cOmniShadowMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cMesh.h">
@@ -100,6 +106,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cShadowMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cOmniShadowMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
