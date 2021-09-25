@@ -168,10 +168,10 @@ void CreateObjects()
 
 	GLfloat floorVertices[] = {
 //	x		y		z		u		v		nX		nY		nZ
-	-10.0f,	0.0f,	-10.0f,	0.0f,	0.0f,	0.0f,	-1.0f,	0.0f,
-	10.0f,	0.0f,	-10.0f,	10.0f,	0.0f,	0.0f,	-1.0f,	0.0f,
-	-10.0f,	0.0f,	10.0f,	0.0f,	10.0f,	0.0f,	-1.0f,	0.0f,
-	10.0f,	0.0f,	10.0f,	10.0f,	10.0f,	0.0f,	-1.0f,	0.0f
+	-20.0f,	0.0f,	-20.0f,	0.0f,	0.0f,	0.0f,	-1.0f,	0.0f,
+	20.0f,	0.0f,	-20.0f,	10.0f,	0.0f,	0.0f,	-1.0f,	0.0f,
+	-20.0f,	0.0f,	20.0f,	0.0f,	10.0f,	0.0f,	-1.0f,	0.0f,
+	20.0f,	0.0f,	20.0f,	10.0f,	10.0f,	0.0f,	-1.0f,	0.0f
 	};
 
 	Mesh* floor = new Mesh();
@@ -262,6 +262,8 @@ void DirectionalShadowMapPass(DirectionalLight* light)
 	glm::mat4 temp = light->CalculateLightTransform();
 	directionalShadowShader.SetDirectionalLightTransform(&temp);
 
+	directionalShadowShader.Validate();
+
 	RenderScene();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);	// When done with the shadowmap pass, bind default framebuffer
@@ -284,6 +286,8 @@ void OmniShadowMapPass(PointLight* light)
 	glUniform1f(uniformFarPlane, light->GetFarPlane());
 
 	omniShadowShader.SetLightMatrices(light->CalculateLightTransform());
+
+	omniShadowShader.Validate();
 
 	RenderScene();
 
@@ -310,7 +314,7 @@ void RenderPass(glm::mat4 projectionMatrix, glm::mat4 viewMatrix)
 	//	2 - Normalised green value
 	//	3 - Normalised blue value
 	//	4 - Normalised alpha value
-	glClearColor(0.5f, 0.0f, 1.0f, 1.0f);	// glClear clears a screen, ready for us to draw to a new frame. glClearColor lets us set the colour of our new frame, not just a black void! Remember the colour values you set should be normalised.
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);	// glClear clears a screen, ready for us to draw to a new frame. glClearColor lets us set the colour of our new frame, not just a black void! Remember the colour values you set should be normalised.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// We use glClear to clear specific elements of our window. Pixels on screen contain more than just the colour - e.g., stencil data, depth data, and more. So we specify which to clear, as many as we want. In this case, we just clear all the colour buffers.
 
 	// View and projection only need to be setup once. Model varies among different objects, so we will setup just view and projection once.
@@ -319,19 +323,21 @@ void RenderPass(glm::mat4 projectionMatrix, glm::mat4 viewMatrix)
 	glUniform3f(uniformEyePosition, camera.GetCameraPosition().x, camera.GetCameraPosition().y, camera.GetCameraPosition().z);	// Inside our fragment shader we want to know the eye position, i.e., camera pos
 
 	shaderList[0].SetDirectionalLight(&mainLight);	// Note: the argument is a pointer, so we pass in the memory address
-	shaderList[0].SetPointLights(pointLights, pointLightCount);
-	shaderList[0].SetSpotLights(spotLights, spotLightCount);
+	shaderList[0].SetPointLights(pointLights, pointLightCount, 0, 3);	//
+	shaderList[0].SetSpotLights(spotLights, spotLightCount, pointLightCount, 3 + pointLightCount);
 
 	glm::mat4 temp = mainLight.CalculateLightTransform();
 	shaderList[0].SetDirectionalLightTransform(&temp);
 
-	mainLight.GetShadowMap()->Read(GL_TEXTURE1);
-	shaderList[0].SetTexture(0);
-	shaderList[0].SetDirectionalShadowMap(1);
+	mainLight.GetShadowMap()->Read(GL_TEXTURE2);
+	shaderList[0].SetTexture(1);
+	shaderList[0].SetDirectionalShadowMap(2);
 
 	glm::vec3 lowerLight = camera.GetCameraPosition();
 	lowerLight.y -= 0.3f;
-	//spotLights[0].SetFlash(lowerLight, camera.GetCameraDirection());
+	spotLights[0].SetFlash(lowerLight, camera.GetCameraDirection());
+
+	shaderList[0].Validate();
 
 	RenderScene();
 }
@@ -374,21 +380,21 @@ int main()
 	blackhawk.LoadModel("Models/uh60.obj");
 
 	mainLight = DirectionalLight(1.0f, 1.0f, 1.0f, 
-								0.1f, 0.6f, 
+								0.1f, 0.3f,
 								0.0f, -10.0f, -15.0f,
 								2048, 2048);
 
 	pointLights[0] = PointLight(0.0f, 0.0f, 1.0f,
-								0.0f, 0.1f,
-								0.0f, 0.0f, 0.0f,
-								0.3f, 0.2f, 0.1f,
+								1.0f, 3.0f,
+								-3.0f, 3.0f, 3.0f,
+								0.3f, 0.1f, 0.1f,
 								1024, 1024,
 								0.01f, 100.0f);
 	pointLightCount++;
 	
 	pointLights[1] = PointLight(0.0f, 1.0f, 0.0f,
-								0.0f, 0.1f,
-								-4.0f, 2.0f, 0.0f,
+								1.0f, 3.0f,
+								3.0f, 5.0f, 3.0f,
 								0.3f, 0.1f, 0.1f,
 								1024, 1024,
 								0.01f, 100.0f);
@@ -428,6 +434,12 @@ int main()
 		camera.MouseControl(mainWindow.GetXChange(), mainWindow.GetYChange());
 
 		shaderList[0].UseShader();
+
+		if (mainWindow.GetKeys()[GLFW_KEY_L])
+		{
+			spotLights[0].Toggle();
+			mainWindow.GetKeys()[GLFW_KEY_L] = false;
+		}
 
 		DirectionalShadowMapPass(&mainLight);	// Update the shadowmap to our main directional light
 		

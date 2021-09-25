@@ -22,8 +22,11 @@ public:
 
     void SetFlash(glm::vec3 position, glm::vec3 direction);
 
+    void Toggle() { mIsOn = !mIsOn; }
+
 private:
 	glm::vec3 mDirection;
 	GLfloat mEdge, mProcessedEdge;	// The edge is our cut-off angle, where processed edge is our angle converted to radians
+    bool mIsOn;
 };
 

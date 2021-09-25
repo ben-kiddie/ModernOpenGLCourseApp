@@ -75,7 +75,7 @@ bool Texture::LoadTextureA()
 
 void Texture::UseTexture()
 {
-	glActiveTexture(GL_TEXTURE0);	// Pass in the texture unit we want to use. The sampler will access a texture through the unit we identify. We can cycle through textures accessed in the fragment shader by activating different units, usually up to 32 units.
+	glActiveTexture(GL_TEXTURE1);	// Pass in the texture unit we want to use. The sampler will access a texture through the unit we identify. We can cycle through textures accessed in the fragment shader by activating different units, usually up to 32 units.
 	glBindTexture(GL_TEXTURE_2D, mTextureID);
 }
 

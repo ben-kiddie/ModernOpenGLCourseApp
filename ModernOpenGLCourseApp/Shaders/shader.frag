@@ -34,6 +34,12 @@ struct SpotLight
 	float edge;
 };
 
+struct OmniShadowMap
+{
+	samplerCube shadowMap;
+	float farPlane;
+};
+
 struct Material
 {
 	float specularIntensity;
@@ -59,10 +65,21 @@ uniform SpotLight spotLights[MAX_SPOT_LIGHTS];
 
 uniform sampler2D theTexture;
 uniform sampler2D directionalShadowMap;
+uniform OmniShadowMap omniShadowMaps[MAX_POINT_LIGHTS + MAX_SPOT_LIGHTS];	// One omni map for each point and spot light
 
 uniform Material material;
 
 uniform vec3 eyePosition;	// i.e., the camera position for any given first person camera
+
+// Globals
+vec3 sampleOffsetDirections[20] = vec3[]
+(
+	vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1, -1), vec3(-1, 1,  1), 
+	vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1, 1, -1), 
+	vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1, 1,  0), 
+	vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1, 0, -1),
+	vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0, 1, -1)
+);
 
 // Functions
 float CalcDirectionalShadowFactor(DirectionalLight light)
@@ -100,6 +117,32 @@ float CalcDirectionalShadowFactor(DirectionalLight light)
 	return shadow;
 }
 
+float CalcOmniShadowFactor(PointLight light, int shadowIndex)
+{
+	vec3 fragToLight = vFragPos - light.position;	// The vector going from the fragment to a light, used in calculating where on a cubemap to sample from.
+	float currentDepth = length(fragToLight);
+	float bias = 0.05f;
+	float shadow = 0.0f;
+	int samples = 20;;
+	float viewDistance = length(eyePosition - vFragPos);	// Use the distance between fragment and camera to blur shadow edges more or less.
+	float diskRadius = (1.0f + (viewDistance / omniShadowMaps[shadowIndex].farPlane)) / 25.0f;
+	float closestDepth = 0.0f;
+
+	for(int i = 0; i < samples; i++)
+	{
+		closestDepth = texture(omniShadowMaps[shadowIndex].shadowMap, fragToLight + sampleOffsetDirections[i] * diskRadius).r;	// Use .r to get just the first and only value on a shadowmap, i.e., the depth component.
+		closestDepth *= omniShadowMaps[shadowIndex].farPlane;	// Expand out from the 0-1 range for comparisons in real world space
+		
+		if(currentDepth - bias > closestDepth)
+		{
+			shadow += 1.0f;
+		}
+	}
+
+	shadow /= float(samples);
+	return shadow;
+}
+
 vec4 CalcLightByDirection(Light light, vec3 direction, float shadowFactor)	// Directional lights calculate by direction, whereas point lights partly do the same, thus we use this function for both
 {
 	vec4 ambientColour = vec4(light.colour, 1.0f) * light.ambientIntensity;
@@ -131,13 +174,15 @@ vec4 CalcDirectionalLight()
 	return CalcLightByDirection(directionalLight.base, directionalLight.direction, shadowFactor);
 }
 
-vec4 CalcPointLight(PointLight pLight)
+vec4 CalcPointLight(PointLight pLight, int shadowIndex)
 {
 		vec3 direction = vFragPos - pLight.position;	// Unlike directional light, we don't have a predefined direction, so we must do this dynamicaly per light
 		float distance = length(direction);	// Make sure we store the distance before we normalise
 		direction = normalize(direction);
 
-		vec4 colour = CalcLightByDirection(pLight.base, direction, 0.0f);
+		float shadowFactor = CalcOmniShadowFactor(pLight, shadowIndex);
+
+		vec4 colour = CalcLightByDirection(pLight.base, direction, shadowFactor);
 		float attenuation = pLight.exponent * distance * distance +	// ax^2 +
 							pLight.linear * distance +				// bx +
 							pLight.constant;						// c
@@ -145,7 +190,7 @@ vec4 CalcPointLight(PointLight pLight)
 		return (colour / attenuation);	// Add the current attenuated lighting result to the fragment
 }
 
-vec4 CalcSpotLight(SpotLight sLight)
+vec4 CalcSpotLight(SpotLight sLight, int shadowIndex)
 {
 	vec3 rayDirection = normalize(vFragPos - sLight.base.position);
 	float slFactor = dot(rayDirection, sLight.direction);	// Set the spot light factor as the angle between the direction a spot light points and the fragment we are targeting. Used in identifying if a fragment is within our cut-off angle.
@@ -153,7 +198,7 @@ vec4 CalcSpotLight(SpotLight sLight)
 	// Only calculate the light if it is within our cone of influence
 	if(slFactor > sLight.edge)
 	{
-		return CalcPointLight(sLight.base)							// If we just took the point light calculations as is, we would get hard edges around our spot light.
+		return CalcPointLight(sLight.base, shadowIndex)							// If we just took the point light calculations as is, we would get hard edges around our spot light.
 		* (1.0f - (1.0f - slFactor)*(1.0f/(1.0f - sLight.edge)));	// The rest of the calculation is used in getting a fade effect around the edge of our spot light.
 	}
 	else
@@ -167,7 +212,7 @@ vec4 CalcPointLights()
 	vec4 totalColour = vec4(0.0f, 0.0f, 0.0f, 0.0f);	// Holds the sum of attenuated point lights affecting this fragment
 	for(int i = 0; i < pointLightCount; i++)
 	{
-		totalColour += CalcPointLight(pointLights[i]);	// Add the current attenuated lighting result to the fragment
+		totalColour += CalcPointLight(pointLights[i], i);	// Add the current attenuated lighting result to the fragment
 	}
 
 	return totalColour;
@@ -178,7 +223,8 @@ vec4 CalcSpotLights()
 	vec4 totalColour = vec4(0.0f, 0.0f, 0.0f, 0.0f);	// Holds the sum of attenuated point lights affecting this fragment
 	for(int i = 0; i < spotLightCount; i++)
 	{
-		totalColour += CalcSpotLight(spotLights[i]);	// Add the current attenuated lighting result to the fragment
+		// In this implementation, point lights are calculated first, then spot lights.
+		totalColour += CalcSpotLight(spotLights[i], i + pointLightCount);	// Add the current attenuated lighting result to the fragment
 	}
 
 	return totalColour;
