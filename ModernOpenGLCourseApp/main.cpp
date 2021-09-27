@@ -30,6 +30,7 @@
 #include "cSpotLight.h"
 #include "cMaterial.h"
 #include "cModel.h"
+#include "cSkybox.h"
 
 
 
@@ -57,12 +58,15 @@ Material shinyMaterial, dullMaterial;
 
 Model xwing;
 Model blackhawk;
+Model monkey;
 
 DirectionalLight mainLight;
 PointLight pointLights[MAX_POINT_LIGHTS];
 SpotLight spotLights[MAX_SPOT_LIGHTS];
 unsigned int pointLightCount = 0;
 unsigned int spotLightCount = 0;
+
+Skybox skybox;
 
 std::vector<Mesh*> meshList;
 std::vector<Shader> shaderList;
@@ -81,12 +85,12 @@ void CalculateAverageNormals(unsigned int* indices, unsigned int indexCount, GLf
 		unsigned int index2 = indices[i + 2] * vertexLength;
 		
 		glm::vec3 v1(vertices[index1] - vertices[index0], vertices[index1 + 1] - vertices[index0 + 1], vertices[index1 + 2] - vertices[index0 + 2]);
-		glm::vec3 v2(vertices[index2] - vertices[index1], vertices[index2 + 1] - vertices[index1 + 1], vertices[index2 + 2] - vertices[index1 + 2]);
+		glm::vec3 v2(vertices[index2] - vertices[index1], vertices[index2 + 1] - vertices[index0 + 1], vertices[index2 + 2] - vertices[index0 + 2]);
 	
 		glm::vec3 normal = glm::cross(v1, v2);
 		normal = glm::normalize(normal);
 
-		index0 += normalOffset, index1 += normalOffset, index2 += normalOffset;
+		index0 += normalOffset; index1 += normalOffset; index2 += normalOffset;
 
 		vertices[index0] += normal.x, vertices[index0 + 1] += normal.y, vertices[index0 + 2] += normal.z;
 		vertices[index1] += normal.x, vertices[index1 + 1] += normal.y, vertices[index1 + 2] += normal.z;
@@ -98,7 +102,7 @@ void CalculateAverageNormals(unsigned int* indices, unsigned int indexCount, GLf
 		unsigned int nOffset = i * vertexLength + normalOffset;
 		glm::vec3 vec(vertices[nOffset], vertices[nOffset + 1], vertices[nOffset + 2]);
 		vec = glm::normalize(vec);
-		vertices[nOffset] = vec.x, vertices[nOffset + 1] = vec.y, vertices[nOffset + 2] = vec.z;
+		vertices[nOffset] = vec.x; vertices[nOffset + 1] = vec.y; vertices[nOffset + 2] = vec.z;
 	}
 }
 
@@ -133,24 +137,24 @@ void CreateObjects()
 #pragma region Cube Exercise
 
 	unsigned int cubeIndices[] = {
-		0, 1, 2, 1, 3, 2,	// Front face
-		1, 5, 3, 5, 7, 3,	// Right face	
-		4, 5, 6, 5, 6, 7,	// Back face	
-		4, 6, 0, 0, 2, 6,	// Left face
-		2, 3, 6, 3, 7, 6,	// Top face
-		0, 1, 4, 1, 5, 4	// Bottom face
+		0, 1, 2, 2, 1, 3,		// front
+		2, 3, 5, 5, 3, 7,		// right
+		5, 7, 4, 4, 7, 6,		// back
+		4, 6, 0, 0, 6, 1,		// left
+		4, 0, 5, 5, 0, 2,		// top
+		1, 6, 3, 3, 6, 7		// bottom
 	};
 
-	GLfloat cubeVertices[] = {
-	//	x		y		z			u		v			nX		nY		nZ		
-		-1.0f,	-1.0f,	-1.0f,		0.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 0 - Front bottom left
-		1.0f,	-1.0f,	-1.0f,		1.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 1 - Front bottom right
-		-1.0f,	1.0f,	-1.0f,		0.0f,	1.0f,		0.0f,	0.0f,	0.0f,	// 2 - Front top left
-		1.0f,	1.0f,	-1.0f,		1.0f,	1.0f,		0.0f,	0.0f,	0.0f,	// 3 - Front top right
-		-1.0f,	-1.0f,	1.0f,		0.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 4 - Back bottom left
-		1.0f,	-1.0f,	1.0f,		1.0f,	0.0f,		0.0f,	0.0f,	0.0f,	// 5 - Back bottom right
-		-1.0f,	1.0f,	1.0f,		0.0f,	1.0f,		0.0f,	0.0f,	0.0f,	// 6 - Back top left
-		1.0f,	1.0f,	1.0f,		1.0f,	1.0f,		0.0f,	0.0f,	0.0f	// 7 - Back top right
+	float cubeVertices[] = {
+		-1.0f, 1.0f, -1.0f,		0.0f, 1.0f,		0.0f, 0.0f, 0.0f,
+		-1.0f, -1.0f, -1.0f,	0.0f, 0.0f,		0.0f, 0.0f, 0.0f,
+		1.0f, 1.0f, -1.0f,		1.0f, 1.0f,		0.0f, 0.0f, 0.0f,
+		1.0f, -1.0f, -1.0f,		1.0f, 0.0f,		0.0f, 0.0f, 0.0f,
+
+		-1.0f, 1.0f, 1.0f,		0.0f, 1.0f,		0.0f, 0.0f, 0.0f,
+		1.0f, 1.0f, 1.0f,		1.0f, 1.0f,		0.0f, 0.0f, 0.0f,
+		-1.0f, -1.0f, 1.0f,		0.0f, 0.0f,		0.0f, 0.0f, 0.0f,
+		1.0f, -1.0f, 1.0f,		1.0f, 0.0f,		0.0f, 0.0f, 0.0f
 	};
 
 	CalculateAverageNormals(cubeIndices, 36, cubeVertices, 64, 8, 5);
@@ -226,6 +230,13 @@ void RenderScene()
 	meshList[3]->RenderMesh();
 
 	model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(5.0f, 0.0f, 5.0f));
+	glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+	emeraldOreTexture.UseTexture();
+	shinyMaterial.UseMaterial(uniformSpecularIntensity, uniformShininess);
+	monkey.RenderModel();
+
+	model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(-20.0f, 0.0f, 15.0f));
 	model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f));
 	glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
@@ -296,15 +307,6 @@ void OmniShadowMapPass(PointLight* light)
 
 void RenderPass(glm::mat4 projectionMatrix, glm::mat4 viewMatrix)
 {
-	shaderList[0].UseShader();
-
-	uniformModel = shaderList[0].GetModelLocation();
-	uniformProjection = shaderList[0].GetProjectionLocation();
-	uniformView = shaderList[0].GetViewLocation();
-	uniformEyePosition = shaderList[0].GetEyePositionLocation();
-	uniformSpecularIntensity = shaderList[0].GetSpecularIntensityLocation();
-	uniformShininess = shaderList[0].GetShininessLocation();
-
 	glViewport(0, 0, 1366, 768);
 
 	// Clear the window
@@ -316,6 +318,16 @@ void RenderPass(glm::mat4 projectionMatrix, glm::mat4 viewMatrix)
 	//	4 - Normalised alpha value
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);	// glClear clears a screen, ready for us to draw to a new frame. glClearColor lets us set the colour of our new frame, not just a black void! Remember the colour values you set should be normalised.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// We use glClear to clear specific elements of our window. Pixels on screen contain more than just the colour - e.g., stencil data, depth data, and more. So we specify which to clear, as many as we want. In this case, we just clear all the colour buffers.
+
+	skybox.DrawSkybox(viewMatrix, projectionMatrix);
+
+	shaderList[0].UseShader();
+	uniformModel = shaderList[0].GetModelLocation();
+	uniformProjection = shaderList[0].GetProjectionLocation();
+	uniformView = shaderList[0].GetViewLocation();
+	uniformEyePosition = shaderList[0].GetEyePositionLocation();
+	uniformSpecularIntensity = shaderList[0].GetSpecularIntensityLocation();
+	uniformShininess = shaderList[0].GetShininessLocation();
 
 	// View and projection only need to be setup once. Model varies among different objects, so we will setup just view and projection once.
 	glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
@@ -373,15 +385,16 @@ int main()
 	shinyMaterial = Material(4.0f, 156);
 	dullMaterial = Material(0.3f, 4);
 
+	monkey = Model();
+	monkey.LoadModel("Models/monkey.obj");
 	xwing = Model();
 	xwing.LoadModel("Models/x-wing.obj");
-
 	blackhawk = Model();
 	blackhawk.LoadModel("Models/uh60.obj");
 
-	mainLight = DirectionalLight(1.0f, 1.0f, 1.0f, 
-								0.1f, 0.3f,
-								0.0f, -10.0f, -15.0f,
+	mainLight = DirectionalLight(1.0f, 0.8f, 0.0f, 
+								0.1f, 0.8f,
+								-10.0f, -12.0f, 20.0f,
 								2048, 2048);
 
 	pointLights[0] = PointLight(0.0f, 0.0f, 1.0f,
@@ -419,6 +432,16 @@ int main()
 							1024, 1024,
 							0.01f, 100.0f);
 	spotLightCount++;
+
+	std::vector<std::string> skyboxFaces;
+	// The order in which faces are added must be the order we sample through the cubemap, i.e., +x, -x, +y, -y, +z, -z
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_rt.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_lf.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_up.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_dn.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_bk.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_ft.tga");
+	skybox = Skybox(skyboxFaces);
 
 	while (!mainWindow.GetShouldClose())
 	{

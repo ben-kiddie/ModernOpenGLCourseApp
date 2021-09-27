@@ -159,6 +159,8 @@
     <None Include="Shaders\omni_shadow_map.vert" />
     <None Include="Shaders\shader.frag" />
     <None Include="Shaders\shader.vert" />
+    <None Include="Shaders\skybox.frag" />
+    <None Include="Shaders\skybox.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cCamera.cpp" />
@@ -171,6 +173,7 @@
     <ClCompile Include="cPointLight.cpp" />
     <ClCompile Include="cShader.cpp" />
     <ClCompile Include="cShadowMap.cpp" />
+    <ClCompile Include="cSkybox.cpp" />
     <ClCompile Include="cSpotLight.cpp" />
     <ClCompile Include="cTexture.cpp" />
     <ClCompile Include="cWindow.cpp" />
@@ -187,6 +190,7 @@
     <ClInclude Include="cPointLight.h" />
     <ClInclude Include="cShader.h" />
     <ClInclude Include="cShadowMap.h" />
+    <ClInclude Include="cSkybox.h" />
     <ClInclude Include="cSpotLight.h" />
     <ClInclude Include="cTexture.h" />
     <ClInclude Include="cWindow.h" />

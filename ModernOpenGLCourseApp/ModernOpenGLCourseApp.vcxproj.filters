@@ -23,6 +23,8 @@
     <None Include="Shaders\omni_shadow_map.frag" />
     <None Include="Shaders\omni_shadow_map.geom" />
     <None Include="Shaders\omni_shadow_map.vert" />
+    <None Include="Shaders\skybox.vert" />
+    <None Include="Shaders\skybox.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cMesh.cpp">
@@ -67,6 +69,9 @@
     <ClCompile Include="cOmniShadowMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cSkybox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cMesh.h">
@@ -109,6 +114,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cOmniShadowMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cSkybox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

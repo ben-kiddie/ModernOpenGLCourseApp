@@ -1,7 +1,8 @@
 #pragma once
 
 #include <GL/glew.h>
-#include <stb/stb_image.h>
+
+#include "Globals.h"
 
 // https://www.textures.com/ - texture repository
 
