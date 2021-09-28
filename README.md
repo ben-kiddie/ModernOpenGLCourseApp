@@ -27,4 +27,6 @@ This application was developed through attending each lecture, developing a thor
 
 ![Image of OpenGL application upon finishing the course](https://i.imgur.com/0sfjaQw.png)
 
+![Additional image of final OpenGL application](https://i.imgur.com/eWYr3UH.png)
+
 This application will be used in other projects, such as a sandbox environment for testing other graphical features.
