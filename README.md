@@ -3,6 +3,11 @@ Application created by accomplishing the uDemy course "Computer Graphics with Mo
 
 This application was developed in Visual Studio 2019 under an x86 solution platform.
 
+How to use the application:
+- Use WASD to move the camera around.
+- Use the mouse to look around with the camera.
+- Press 'L' to activate and de-activate the torch spotlight.
+
 This course focused on creating and iterating upon an OpenGL application, introducing new features and techniques with each lecture while also exploring relevant theory. 
 
 Topics covered include:
