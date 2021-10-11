@@ -1,5 +1,7 @@
 # ModernOpenGLCourseApp
-Application created by accomplishing the uDemy course "Computer Graphics with Modern OpenGL and C++"
+Application created by accomplishing the uDemy course "Computer Graphics with Modern OpenGL and C++".
+
+This application was developed in Visual Studio 2019 under an x86 solution platform.
 
 This course focused on creating and iterating upon an OpenGL application, introducing new features and techniques with each lecture while also exploring relevant theory. 
 
